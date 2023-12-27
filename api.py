@@ -79,6 +79,7 @@ class PRN:
         else:
             image = input
 
+        print("HERE", image.ndim)
         if image.ndim < 3:
             image = np.tile(image[:,:,np.newaxis], [1,1,3])
 
@@ -92,9 +93,12 @@ class PRN:
             else:  # bounding box
                 bbox = image_info
                 left = bbox[0]; right = bbox[1]; top = bbox[2]; bottom = bbox[3]
+                print(left, right, top, bottom)
+                print(image.shape)
             old_size = (right - left + bottom - top)/2
-            center = np.array([right - (right - left) / 2.0, bottom - (bottom - top) / 2.0])
-            size = int(old_size*1.6)
+            center = np.array([right - (right - left) / 2.0, bottom - (bottom - top) / 2.0]) # [161, 118]
+            size = int(old_size*1.6) #528
+
         else:
             detected_faces = self.dlib_detect(image)
             if len(detected_faces) == 0:
@@ -116,9 +120,9 @@ class PRN:
         cropped_image = warp(image, tform.inverse, output_shape=(self.resolution_inp, self.resolution_inp))
 
         # run our net
-        #st = time()
+        st = time()
         cropped_pos = self.net_forward(cropped_image)
-        #print 'net time:', time() - st
+        print ('net time:', time() - st)
 
         # restore 
         cropped_vertices = np.reshape(cropped_pos, [-1, 3]).T

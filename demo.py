@@ -14,8 +14,13 @@ from utils.estimate_pose import estimate_pose
 from utils.rotate_vertices import frontalize
 from utils.render_app import get_visibility, get_uv_mask, get_depth_image
 from utils.write import write_obj_with_colors, write_obj_with_texture
+import time
+
 
 def main(args):
+
+    start = time.time()
+
     if args.isShow or args.isTexture:
         import cv2
         from utils.cv_plot import plot_kpt, plot_vertices, plot_pose_box
@@ -39,10 +44,10 @@ def main(args):
     for i, image_path in enumerate(image_path_list):
 
         name = image_path.strip().split('/')[-1][:-4]
-
         # read image
         image = imread(image_path)
         [h, w, c] = image.shape
+
         if c>3:
             image = image[:,:,:3]
 
@@ -50,7 +55,7 @@ def main(args):
         if args.isDlib:
             max_size = max(image.shape[0], image.shape[1])
             if max_size> 1000:
-                image = rescale(image, 1000./max_size)
+                image = rescale(image, 1000./max_size, channel_axis=True)
                 image = (image*255).astype(np.uint8)
             pos = prn.process(image) # use dlib to detect face
         else:
@@ -58,7 +63,7 @@ def main(args):
                 image = resize(image, (256,256))
                 pos = prn.net_forward(image/255.) # input image has been cropped to 256x256
             else:
-                box = np.array([0, image.shape[1]-1, 0, image.shape[0]-1]) # cropped with bounding box
+                box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
                 pos = prn.process(image, box)
         
         image = image/255.
@@ -97,13 +102,9 @@ def main(args):
                 write_obj_with_colors(os.path.join(save_folder, name + '.obj'), save_vertices, prn.triangles, colors) #save 3d face(can open with meshlab)
 
         if args.isDepth:
+            vertices = prn.get_vertices(pos)
             depth_image = get_depth_image(vertices, prn.triangles, h, w, True)
-            depth = get_depth_image(vertices, prn.triangles, h, w)
             imsave(os.path.join(save_folder, name + '_depth.jpg'), depth_image)
-            sio.savemat(os.path.join(save_folder, name + '_depth.mat'), {'depth':depth})
-
-        if args.isMat:
-            sio.savemat(os.path.join(save_folder, name + '_mesh.mat'), {'vertices': vertices, 'colors': colors, 'triangles': prn.triangles})
 
         if args.isKpt or args.isShow:
             # get landmarks
@@ -125,20 +126,23 @@ def main(args):
             cv2.imshow('dense alignment', plot_vertices(image, vertices))
             cv2.imshow('pose', plot_pose_box(image, camera_matrix, kpt))
             cv2.waitKey(0)
+        
+    end = time.time()
+    print("SPENT TIME: ", end - start)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Joint 3D Face Reconstruction and Dense Alignment with Position Map Regression Network')
 
-    parser.add_argument('-i', '--inputDir', default='TestImages/', type=str,
+    parser.add_argument('-i', '--inputDir', default='test/', type=str,
                         help='path to the input directory, where input images are stored.')
-    parser.add_argument('-o', '--outputDir', default='TestImages/results', type=str,
+    parser.add_argument('-o', '--outputDir', default='test_out', type=str,
                         help='path to the output directory, where results(obj,txt files) will be stored.')
     parser.add_argument('--gpu', default='0', type=str,
                         help='set gpu id, -1 for CPU')
-    parser.add_argument('--isDlib', default=True, type=ast.literal_eval,
+    parser.add_argument('--isDlib', default=False, type=ast.literal_eval,
                         help='whether to use dlib for detecting face, default is True, if False, the input image should be cropped in advance')
-    parser.add_argument('--is3d', default=True, type=ast.literal_eval,
+    parser.add_argument('--is3d', default=False, type=ast.literal_eval,
                         help='whether to output 3D face(.obj). default save colors.')
     parser.add_argument('--isMat', default=False, type=ast.literal_eval,
                         help='whether to save vertices,color,triangles as mat for matlab showing')
