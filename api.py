@@ -79,37 +79,15 @@ class PRN:
         else:
             image = input
 
-        print("HERE", image.ndim)
         if image.ndim < 3:
             image = np.tile(image[:,:,np.newaxis], [1,1,3])
 
         if image_info is not None:
-            if np.max(image_info.shape) > 4: # key points to get bounding box
-                kpt = image_info
-                if kpt.shape[0] > 3:
-                    kpt = kpt.T
-                left = np.min(kpt[0, :]); right = np.max(kpt[0, :]); 
-                top = np.min(kpt[1,:]); bottom = np.max(kpt[1,:])
-            else:  # bounding box
-                bbox = image_info
-                left = bbox[0]; right = bbox[1]; top = bbox[2]; bottom = bbox[3]
-                print(left, right, top, bottom)
-                print(image.shape)
+            bbox = image_info
+            left = bbox[0]; right = bbox[1]; top = bbox[2]; bottom = bbox[3]
             old_size = (right - left + bottom - top)/2
             center = np.array([right - (right - left) / 2.0, bottom - (bottom - top) / 2.0]) # [161, 118]
             size = int(old_size*1.6) #528
-
-        else:
-            detected_faces = self.dlib_detect(image)
-            if len(detected_faces) == 0:
-                print('warning: no detected face')
-                return None
-
-            d = detected_faces[0].rect ## only use the first detected face (assume that each input image only contains one face)
-            left = d.left(); right = d.right(); top = d.top(); bottom = d.bottom()
-            old_size = (right - left + bottom - top)/2
-            center = np.array([right - (right - left) / 2.0, bottom - (bottom - top) / 2.0 + old_size*0.14])
-            size = int(old_size*1.58)
 
         # crop image
         src_pts = np.array([[center[0]-size/2, center[1]-size/2], [center[0] - size/2, center[1]+size/2], [center[0]+size/2, center[1]-size/2]])
