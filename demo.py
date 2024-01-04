@@ -41,13 +41,12 @@ def main(args):
 
         # the core: regress position map
         # if image.shape[0] == image.shape[1]:
-        image = resize(image, (256,256))
-        pos = prn.net_forward(image/255.) # input image has been cropped to 256x256
+        # image = resize(image, (256,256))
+        # pos = prn.net_forward(image/255.) # input image has been cropped to 256x256
         # else:
-        #     box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
-        #     pos = prn.process(image, box)
+        box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
+        pos = prn.process(image, box)
         
-        # image = image/255.
         if pos is None:
             continue
 
