@@ -10,6 +10,8 @@ from utils.write import write_obj_with_colors
 
 # ---- init PRN
 os.environ['CUDA_VISIBLE_DEVICES'] = '0' # GPU number, -1 for CPU
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 prn = PRN(is_dlib = False) 
 
 

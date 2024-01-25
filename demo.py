@@ -50,7 +50,7 @@ def main(args):
         if args.isDlib:
             max_size = max(image.shape[0], image.shape[1])
             if max_size> 1000:
-                image = rescale(image, 1000./max_size)
+                image = rescale(image, 1000./max_size, channel_axis=True)
                 image = (image*255).astype(np.uint8)
             pos = prn.process(image) # use dlib to detect face
         else:
