@@ -2,12 +2,13 @@ import numpy as np
 import os
 from glob import glob
 from skimage.io import imread, imsave
-from skimage.transform import rescale, resize
 from time import time
 import argparse
-
+from skimage.transform import resize
 from api import PRN
 from utils.render_app import get_depth_image
+
+import threading
 
 
 def main(args):
@@ -34,6 +35,8 @@ def main(args):
         name = image_path.strip().split('/')[-1][:-4]
         # read image
         image = imread(image_path)
+        # image = resize(image, (image.shape[0] // 4, image.shape[1] // 4),
+        #                anti_aliasing=True)
         [h, w, c] = image.shape
 
         if c>3:
@@ -49,11 +52,16 @@ def main(args):
         
         if pos is None:
             continue
-
+        
         vertices = prn.get_vertices(pos)
+        st = time()
         depth_image = get_depth_image(vertices, prn.triangles, h, w, True)
+        end = time()
+        print("rendering time: ", end-st)
+        print("img size: ", (h, w))
         imsave(os.path.join(save_folder, name + '_depth.jpg'), depth_image)
-     
+
+
     end = time()
     print("SPENT TIME: ", end - start)
 
