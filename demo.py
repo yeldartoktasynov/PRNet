@@ -7,8 +7,35 @@ import argparse
 from skimage.transform import resize
 from api import PRN
 from utils.render_app import get_depth_image
+from joblib import Parallel, delayed
 
 import threading
+
+def process_img(image_path, prn, save_folder):
+    name = image_path.strip().split('/')[-1][:-4]
+        # read image
+    image = imread(image_path)
+            
+    [h, w, c] = image.shape
+
+    if c>3:
+        image = image[:,:,:3]
+
+
+    box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
+    pos = prn.process(image, box)
+    
+    if pos is None:
+        return
+    
+    vertices = prn.get_vertices(pos)
+    st = time()
+    depth_image = get_depth_image(vertices, prn.triangles, h, w, True)
+    end = time()
+    print("rendering time: ", end-st)
+    print("img size: ", (h, w))
+    imsave(os.path.join(save_folder, name + '_depth.jpg'), depth_image)
+
 
 
 def main(args):
@@ -31,36 +58,7 @@ def main(args):
         image_path_list.extend(glob(os.path.join(image_folder, files)))
 
     for _, image_path in enumerate(image_path_list):
-
-        name = image_path.strip().split('/')[-1][:-4]
-        # read image
-        image = imread(image_path)
-        # image = resize(image, (image.shape[0] // 4, image.shape[1] // 4),
-        #                anti_aliasing=True)
-        [h, w, c] = image.shape
-
-        if c>3:
-            image = image[:,:,:3]
-
-        # the core: regress position map
-        # if image.shape[0] == image.shape[1]:
-        # image = resize(image, (256,256))
-        # pos = prn.net_forward(image/255.) # input image has been cropped to 256x256
-        # else:
-        box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
-        pos = prn.process(image, box)
-        
-        if pos is None:
-            continue
-        
-        vertices = prn.get_vertices(pos)
-        st = time()
-        depth_image = get_depth_image(vertices, prn.triangles, h, w, True)
-        end = time()
-        print("rendering time: ", end-st)
-        print("img size: ", (h, w))
-        imsave(os.path.join(save_folder, name + '_depth.jpg'), depth_image)
-
+        process_img(image_path, prn, save_folder)
 
     end = time()
     print("SPENT TIME: ", end - start)
