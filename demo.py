@@ -4,24 +4,31 @@ from glob import glob
 from skimage.io import imread, imsave
 from time import time
 import argparse
-from skimage.transform import resize
+from skimage.transform import rescale
 from api import PRN
 from utils.render_app import get_depth_image
 from joblib import Parallel, delayed
 
-import threading
+
+# ---- init PRN
+os.environ['CUDA_VISIBLE_DEVICES'] = '0' # GPU number, -1 for CPU
+prn = PRN()
 
 def process_img(image_path, prn, save_folder):
     name = image_path.strip().split('/')[-1][:-4]
         # read image
     image = imread(image_path)
             
+    min_size = min(image.shape[0], image.shape[1])
+    if min_size >= 32:
+        image = rescale(image, 32./min_size)
+        image = (image*255).astype(np.uint8)
+    
     [h, w, c] = image.shape
-
     if c>3:
         image = image[:,:,:3]
 
-
+    print(image.shape)
     box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
     pos = prn.process(image, box)
     
@@ -32,6 +39,7 @@ def process_img(image_path, prn, save_folder):
     st = time()
     depth_image = get_depth_image(vertices, prn.triangles, h, w, True)
     end = time()
+    print("image name: ", name)
     print("rendering time: ", end-st)
     print("img size: ", (h, w))
     imsave(os.path.join(save_folder, name + '_depth.jpg'), depth_image)
@@ -41,10 +49,6 @@ def process_img(image_path, prn, save_folder):
 def main(args):
 
     start = time()
-
-    # ---- init PRN
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu # GPU number, -1 for CPU
-    prn = PRN()
 
     # ------------- load data
     image_folder = args.inputDir
@@ -59,6 +63,8 @@ def main(args):
 
     for _, image_path in enumerate(image_path_list):
         process_img(image_path, prn, save_folder)
+
+    # results = Parallel(n_jobs=2)(delayed(process_img)(image_path, prn, save_folder) for _, image_path in enumerate(image_path_list))
 
     end = time()
     print("SPENT TIME: ", end - start)
