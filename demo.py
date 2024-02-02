@@ -7,8 +7,7 @@ import argparse
 from skimage.transform import rescale
 from api import PRN
 from utils.render_app import get_depth_image
-from joblib import Parallel, delayed
-
+import config as cfg
 
 # ---- init PRN
 os.environ['CUDA_VISIBLE_DEVICES'] = '0' # GPU number, -1 for CPU
@@ -20,15 +19,14 @@ def process_img(image_path, prn, save_folder):
     image = imread(image_path)
             
     min_size = min(image.shape[0], image.shape[1])
-    if min_size >= 32:
-        image = rescale(image, 32./min_size)
+    if min_size >= cfg.min_size:
+        image = rescale(image, cfg.min_size*1.0/min_size)
         image = (image*255).astype(np.uint8)
     
     [h, w, c] = image.shape
     if c>3:
         image = image[:,:,:3]
 
-    print(image.shape)
     box = np.array([0, image.shape[0]-1, 0, image.shape[1]-1]) # cropped with bounding box
     pos = prn.process(image, box)
     

@@ -4,7 +4,6 @@ Mail: fengyao@sjtu.edu.cn
 '''
 import numpy as np
 from time import time
-from joblib import Parallel, delayed
 
 def isPointInTri(point, tri_points):
     ''' Judge whether the point is in the triangle
