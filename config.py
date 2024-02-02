@@ -1,0 +1,1 @@
+save_folder = "/home/yeldar/Documents/Liveness/depth-estimation/PRNet/test_out"

@@ -160,6 +160,8 @@ class PRN:
 
         return colors
 
+    def get_triangles(self):
+        return self.triangles
 
 
 

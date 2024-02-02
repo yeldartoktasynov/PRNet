@@ -76,7 +76,6 @@ def render_texture(vertices, colors, triangles, h, w, c = 3):
 
     # results = Parallel(n_jobs=2)(delayed(process_img)(image_path, prn, save_folder) for _, image_path in enumerate(image_path_list))
 
-
     for i in range(triangles.shape[1]):
         tri = triangles[:, i] # 3 vertex indices
 
