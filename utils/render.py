@@ -4,7 +4,7 @@ Mail: fengyao@sjtu.edu.cn
 '''
 import numpy as np
 from time import time
-from .cython import mesh_core_cython
+# from .cython import mesh_core_cython
 
 def isPointInTri(point, tri_points):
     ''' Judge whether the point is in the triangle
@@ -78,51 +78,21 @@ def render_texture(vertices, colors, triangles, h, w, c = 3):
 
     for i in range(triangles.shape[1]):
         tri = triangles[:, i] # 3 vertex indices
+        process_triangles(image, vertices, tri_depth, tri_tex, depth_buffer, h, w, tri, i)
 
-        # the inner bounding box
-        umin = max(int(np.ceil(np.min(vertices[0,tri]))), 0)
-        umax = min(int(np.floor(np.max(vertices[0,tri]))), w-1)
+        # # the inner bounding box
+        # umin = max(int(np.ceil(np.min(vertices[0,tri]))), 0)
+        # umax = min(int(np.floor(np.max(vertices[0,tri]))), w-1)
 
-        vmin = max(int(np.ceil(np.min(vertices[1,tri]))), 0)
-        vmax = min(int(np.floor(np.max(vertices[1,tri]))), h-1)
+        # vmin = max(int(np.ceil(np.min(vertices[1,tri]))), 0)
+        # vmax = min(int(np.floor(np.max(vertices[1,tri]))), h-1)
 
-        if umax<umin or vmax<vmin:
-            continue
+        # if umax<umin or vmax<vmin:
+        #     continue
 
-        for u in range(umin, umax+1):
-            for v in range(vmin, vmax+1):
-                if tri_depth[i] > depth_buffer[v, u] and isPointInTri([u,v], vertices[:2, tri]): 
-                    depth_buffer[v, u] = tri_depth[i]
-                    image[v, u, :] = tri_tex[:, i]
+        # for u in range(umin, umax+1):
+        #     for v in range(vmin, vmax+1):
+        #         if tri_depth[i] > depth_buffer[v, u] and isPointInTri([u,v], vertices[:2, tri]): 
+        #             depth_buffer[v, u] = tri_depth[i]
+        #             image[v, u, :] = tri_tex[:, i]
     return image
-
-
-def rasterize_triangles(vertices, triangles, h, w):
-    ''' 
-    Args:
-        vertices: [nver, 3]
-        triangles: [ntri, 3]
-        h: height
-        w: width
-    Returns:
-        depth_buffer: [h, w] saves the depth, here, the bigger the z, the fronter the point.
-        triangle_buffer: [h, w] saves the tri id(-1 for no triangle). 
-        barycentric_weight: [h, w, 3] saves corresponding barycentric weight.
-
-    # Each triangle has 3 vertices & Each vertex has 3 coordinates x, y, z.
-    # h, w is the size of rendering
-    '''
-
-    # initial 
-    depth_buffer = np.zeros([h, w]) - 999999. #set the initial z to the farest position
-    triangle_buffer = np.zeros([h, w], dtype = np.int32) - 1  # if tri id = -1, the pixel has no triangle correspondance
-    barycentric_weight = np.zeros([h, w, 3], dtype = np.float32)  # 
-    
-    vertices = vertices.astype(np.float32).copy()
-    triangles = triangles.astype(np.int32).copy()
-
-    mesh_core_cython.rasterize_triangles_core(
-                vertices, triangles,
-                depth_buffer, triangle_buffer, barycentric_weight, 
-                vertices.shape[0], triangles.shape[0], 
-                h, w)
