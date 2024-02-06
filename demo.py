@@ -40,6 +40,9 @@ def process_img(image_path, prn, save_folder):
     print("image name: ", name)
     print("rendering time: ", end-st)
     print("img size: ", (h, w))
+
+    depth_image = (depth_image*255).astype(np.uint8)
+
     imsave(os.path.join(save_folder, name + '_depth.jpg'), depth_image)
 
 
@@ -62,7 +65,6 @@ def main(args):
     for _, image_path in enumerate(image_path_list):
         process_img(image_path, prn, save_folder)
 
-    # results = Parallel(n_jobs=2)(delayed(process_img)(image_path, prn, save_folder) for _, image_path in enumerate(image_path_list))
 
     end = time()
     print("SPENT TIME: ", end - start)
