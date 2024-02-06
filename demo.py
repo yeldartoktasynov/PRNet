@@ -17,34 +17,34 @@ from skimage.transform import estimate_transform, warp
 
 from predictor import PosPrediction
 
-# class PosPrediction():
-#     def __init__(self, resolution_inp = 256, resolution_op = 256): 
-#         # -- hyper settings
-#         self.resolution_inp = resolution_inp
-#         self.resolution_op = resolution_op
-#         self.MaxPos = resolution_inp*1.1
+class PosPrediction():
+    def __init__(self, resolution_inp = 256, resolution_op = 256): 
+        # -- hyper settings
+        self.resolution_inp = resolution_inp
+        self.resolution_op = resolution_op
+        self.MaxPos = resolution_inp*1.1
 
-#         # network type
-#         self.network = resfcn256(self.resolution_inp, self.resolution_op)
+        # network type
+        self.network = resfcn256(self.resolution_inp, self.resolution_op)
 
-#         # net forward
-#         self.x = tf.placeholder(tf.float32, shape=[None, self.resolution_inp, self.resolution_inp, 3])  
-#         self.x_op = self.network(self.x, is_training = False)
-#         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
+        # net forward
+        self.x = tf.placeholder(tf.float32, shape=[None, self.resolution_inp, self.resolution_inp, 3])  
+        self.x_op = self.network(self.x, is_training = False)
+        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
 
-#     def restore(self, model_path):        
-#         tf.train.Saver(self.network.vars).restore(self.sess, model_path)
+    def restore(self, model_path):        
+        tf.train.Saver(self.network.vars).restore(self.sess, model_path)
  
-#     def predict(self, image):
-#         pos = self.sess.run(self.x_op, 
-#                     feed_dict = {self.x: image[np.newaxis, :,:,:]})
-#         pos = np.squeeze(pos)
-#         return pos*self.MaxPos
+    def predict(self, image):
+        pos = self.sess.run(self.x_op, 
+                    feed_dict = {self.x: image[np.newaxis, :,:,:]})
+        pos = np.squeeze(pos)
+        return pos*self.MaxPos
 
-#     def predict_batch(self, images):
-#         pos = self.sess.run(self.x_op, 
-#                     feed_dict = {self.x: images})
-#         return pos*self.MaxPos
+    def predict_batch(self, images):
+        pos = self.sess.run(self.x_op, 
+                    feed_dict = {self.x: images})
+        return pos*self.MaxPos
 
 def get_vertices(pos):
     '''
@@ -132,7 +132,7 @@ def process_img(image_path):
         return
     vertices = get_vertices(pos)
     st = time()
-    depth_image = get_depth_image(vertices, triangles, h, w, False)
+    depth_image = get_depth_image(vertices, triangles, h, w)
     end = time()
     print("image name: ", name)
     print("rendering time: ", end-st)
@@ -151,17 +151,17 @@ def main():
 
 if __name__ == '__main__':
 
-    # class MyManager(BaseManager):
-    #     pass
+    class MyManager(BaseManager):
+        pass
 
-    # class PRNProxy(NamespaceProxy):
-    #     _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'next')
+    class PRNProxy(NamespaceProxy):
+        _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'next')
 
-    # MyManager.register('PRNRegistred', PRN, PRNProxy)
+    MyManager.register('PRNRegistred', PRN, PRNProxy)
     os.environ['CUDA_VISIBLE_DEVICES'] = '0' # GPU number, -1 for CPU
 
-    # M = MyManager()
-    # M.start()
+    M = MyManager()
+    M.start()
 
     # ---- init PRN
     # prn = M.PRNRegistred()
